@@ -1,11 +1,42 @@
+# West manifest: which firmware trees this configuration builds against.
+#
+# Dependency policy: MoErgo's ZMK is pinned to a numbered release. The
+# RawTouch module and the Cirque driver each publish numbered release tags
+# and a moving `stable` tag that points at their newest release: set both
+# to `stable` to follow releases, or pin both to numbered tags taken from
+# the module's release notes for a reproducible build. Avoid `main`, which
+# carries unreleased work. See README.md, "Dependency versions".
 manifest:
   remotes:
     - name: moergo-sc
       url-base: https://github.com/moergo-sc
+    - name: kalakris
+      url-base: https://github.com/kalakris
   projects:
+    # MoErgo's ZMK distribution (ZMK 0.3 / Zephyr 3.5): the Go60 board
+    # definition and the RGB status feature the stock keymap uses. v26.09
+    # is the MoErgo release the RawTouch module is tested against.
     - name: zmk
       remote: moergo-sc
-      revision: main
+      revision: v26.09
       import: app/west.yml
+
+    # Cirque Pinnacle driver with absolute-position reporting. This entry
+    # overrides the `cirque-input-module` project that moergo-sc/zmk's own
+    # manifest imports, Pete Johanson's relative-mode driver: west keeps
+    # the first definition of a project name, and this manifest's projects
+    # come before its imports. It is Zephyr's in-tree Pinnacle driver
+    # packaged for Zephyr 3.5 with small patches; see the zmk-raw-touch
+    # README, "Compatibility".
+    - name: cirque-input-module
+      remote: kalakris
+      revision: v0.1.0
+
+    # The RawTouch firmware module: absolute touch reports to the host over
+    # a second HID interface, firmware tap-to-click, and the Standard-mode
+    # pointer and wheel path.
+    - name: zmk-raw-touch
+      remote: kalakris
+      revision: v0.1.0
   self:
     path: config

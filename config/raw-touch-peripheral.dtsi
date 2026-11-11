@@ -1,0 +1,25 @@
+/*
+ * Right half (split peripheral): relay the right pad's absolute samples to
+ * the left half, each carrying this half's own sample time.
+ *
+ * The board definition already routes the pad into the `cirque_split`
+ * relay and disables both input listeners on this half; the left half
+ * processes the samples. This file only adds the timestamp processor to
+ * the relay.
+ */
+
+#include "raw-touch-glidepoint.dtsi"
+
+/ {
+    input_processors {
+        zip_raw_touch_split_stamp: zip_raw_touch_split_stamp {
+            compatible = "zmk,input-processor-raw-touch-split-stamp";
+            #input-processor-cells = <1>;
+        };
+    };
+};
+
+&cirque_split {
+    /* The cell is the relay's own reg (cirque_split@0 -> 0). */
+    input-processors = <&zip_raw_touch_split_stamp 0>;
+};

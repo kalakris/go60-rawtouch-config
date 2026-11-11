@@ -1,0 +1,40 @@
+/*
+ * Switch this half's Cirque pad (the board's `glidepoint` node) to
+ * absolute-position reporting under the driver named in west.yml.
+ * Included on both halves.
+ *
+ * The board definition configures the pad for the Cirque driver MoErgo's
+ * ZMK ships (Pete Johanson's cirque-input-module). The driver this
+ * configuration builds with uses different property names, and the
+ * devicetree tooling rejects properties a binding does not declare, so
+ * the stock driver's ones are removed before their equivalents are set.
+ * `sensitivity` keeps the board's stock value: both drivers declare it
+ * under the same name.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+&glidepoint {
+    /delete-property/ dr-gpios;
+    /delete-property/ rotate-90;
+    /delete-property/ y-invert;
+    /delete-property/ no-secondary-tap;
+
+    /* The pin the board wires, under this driver's property name. */
+    data-ready-gpios = <&go60_ext 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+
+    /* Report finger position and touch strength instead of relative
+     * motion. The RawTouch module derives pointer motion from these
+     * samples and sends them to the host app. */
+    data-mode = "absolute";
+
+    /* Samples reported after the finger lifts. The driver defaults this to
+     * 0, which reports no lift-off at all: no release for the host, no
+     * momentum, and no tap detection. */
+    idle-packets-count = <3>;
+
+    /* The stock rotate-90 and y-invert are declared on the module's pad
+     * node instead (raw-touch-central.dtsi), so pointer motion and the
+     * host app see the same mounting. Setting the driver's own swap-xy or
+     * invert-y here would bake the orientation into the reported samples. */
+};

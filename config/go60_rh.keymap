@@ -1,0 +1,7 @@
+/*
+ * Right half (the split peripheral on the stock Go60). The stock keymap is
+ * included unchanged; the RawTouch additions for this half follow it.
+ */
+
+#include "go60.keymap"
+#include "raw-touch-peripheral.dtsi"

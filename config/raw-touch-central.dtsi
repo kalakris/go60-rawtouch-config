@@ -1,0 +1,139 @@
+/*
+ * Left half (split central): register both pads with the RawTouch module
+ * and rebuild the stock listener chains on the motion the module derives.
+ *
+ * This file is the whole trackpad configuration. It replaces the pad
+ * listeners outright, so the trackpad blocks of the keymap included before
+ * it (the stock one, or one exported from MoErgo's Layout Editor) have no
+ * effect, and it needs nothing from the keymap except, optionally, the
+ * layer names LAYER_SymbolNav and LAYER_Factory.
+ *
+ * Pad roles stay as stock: the LEFT pad scrolls (and points on the Factory
+ * layer), the RIGHT pad points (faster on SymbolNav). What changes is where
+ * the numbers come from: the pads now report absolute positions and the
+ * module derives motion from them, about 4.2 times stock's relative-mode
+ * motion (measured on a Go60). So each stock pointer ratio is multiplied
+ * by 5/21 (3:1 becomes 5:7, 9:1 becomes 15:7), and the left pad's wheel
+ * divisor is 34. These scalers are the knobs for pointer and Standard-mode
+ * scroll speed.
+ */
+
+#include "raw-touch-glidepoint.dtsi"
+#include <raw_touch/processors.dtsi>
+
+/ {
+    /* Left pad, attached to this half. */
+    raw_touch_left: raw_touch_left {
+        compatible = "zmk,raw-touch-pad";
+        device = <&glidepoint>;
+        pad-id = <0>;
+
+        /* The stock mounting, moved here from the driver node. */
+        rotate-90;
+        y-invert;
+
+        /* Firmware tap detection, replacing the hardware taps that
+         * absolute mode disables. This pad's base chain below is marked as
+         * scrolling, and by default the module does not report taps for
+         * touches that were in scroll context; tap-click-while-scrolling
+         * lifts that for this pad, so a tap reaches the right-click mapper
+         * in the chain; while RawTouch runs, the firmware parks the
+         * tap and the app confirms it unless the touch was stopping a
+         * coasting scroll. On the Factory layer, where the pad points, a
+         * tap left-clicks as stock. */
+        tap-click;
+        tap-click-while-scrolling;
+    };
+
+    /* Right pad, relayed from the right half through the split link. */
+    raw_touch_right: raw_touch_right {
+        compatible = "zmk,raw-touch-pad";
+        device = <&cirque_split>;
+        pad-id = <1>;
+        rotate-90;
+        y-invert;
+        tap-click;
+    };
+
+    input_processors {
+        /* Every listener needs its own idle-filter instance. The left
+         * pad's listener uses the one raw_touch/processors.dtsi provides;
+         * this one is for the right pad's listener. */
+        zip_raw_touch_idle_filter_right: zip_raw_touch_idle_filter_right {
+            compatible = "zmk,input-processor-raw-touch-idle-filter";
+            #input-processor-cells = <0>;
+        };
+
+        /* Turns the left pad's tap into a right click, as the stock
+         * keymap's own mapper does. */
+        zip_raw_touch_right_click: zip_raw_touch_right_click {
+            compatible = "zmk,input-processor-code-mapper";
+            #input-processor-cells = <0>;
+            type = <INPUT_EV_KEY>;
+            map = <INPUT_BTN_0 INPUT_BTN_1>;
+        };
+    };
+};
+
+/* The board's listeners go, with everything the keymap set on them, and
+ * are defined again below. */
+/delete-node/ &cirque_lh_listener;
+/delete-node/ &cirque_rh_listener;
+
+/ {
+    /* Left pad: the scroll pad, as stock.
+     *
+     * The scroll marker first: every touch handled by this chain is scroll
+     * context, so RawTouch scrolls from the reported samples while it
+     * runs, and the wheel processors after the marker provide two-axis
+     * wheel scrolling in Standard mode, in the same directions as stock
+     * (checked against MoErgo's stock firmware on a Go60): no transform
+     * between the mapper and the scaler, as in the stock chain. For the
+     * opposite vertical direction, add
+     * <&zip_scroll_transform INPUT_TRANSFORM_Y_INVERT> after the mapper.
+     * The right-click mapper turns the pad's taps into right clicks, as
+     * stock. The idle filter is last in every chain.
+     *
+     * Wheel rate: the scroll scaler's divisor is set so that a full-height
+     * swipe produces the same wheel count as MoErgo's default left-pad
+     * chain (measured on a Go60). It is the knob for Standard-mode scroll
+     * speed: a larger divisor scrolls slower. RawTouch mode does not use
+     * it. */
+    cirque_lh_listener: cirque_lh_listener {
+        compatible = "zmk,input-listener";
+        device = <&glidepoint>;
+        input-processors = <&zip_raw_touch_scroll>,
+                           <&zip_xy_to_scroll_mapper>,
+                           <&zip_scroll_scaler 1 34>, /* wheel rate: see above */
+                           <&zip_raw_touch_right_click>,
+                           <&zip_raw_touch_idle_filter>;
+
+#ifdef LAYER_Factory
+        /* Stock: the left pad points on the Factory layer. No marker here,
+         * so these touches are pointer context and a tap left-clicks. */
+        factory {
+            layers = <LAYER_Factory>;
+            input-processors = <&zip_xy_scaler 5 7>,
+                               <&zip_raw_touch_idle_filter>;
+        };
+#endif
+    };
+
+    /* Right pad: the pointer, as stock (3:1 becomes 5:7, 9:1 becomes
+     * 15:7). */
+    cirque_rh_listener: cirque_rh_listener {
+        compatible = "zmk,input-listener";
+        device = <&cirque_split>;
+        input-processors = <&zip_xy_scaler 5 7>,
+                           <&zip_raw_touch_idle_filter_right>;
+
+#ifdef LAYER_SymbolNav
+        /* Stock: a faster pointer while the SymbolNav layer is active. */
+        symbol_nav {
+            layers = <LAYER_SymbolNav>;
+            input-processors = <&zip_xy_scaler 15 7>,
+                               <&zip_raw_touch_idle_filter_right>;
+        };
+#endif
+    };
+};

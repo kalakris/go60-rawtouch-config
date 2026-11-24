@@ -406,7 +406,8 @@ and pair the keyboard again.
 
 ## License
 
-The RawTouch additions are MIT-licensed (see [LICENSE](LICENSE)). Files
+Everything here is MIT-licensed (see [LICENSE](LICENSE)): the files
 that come from MoErgo's Go60 template, whose history this repository
-keeps, remain MoErgo's under the template's own terms; the stock keymap,
-`config/go60.keymap`, carries The ZMK Contributors' MIT notice.
+keeps (MoErgo confirmed the template's MIT license by email), and the
+RawTouch additions. The stock keymap, `config/go60.keymap`, carries The
+ZMK Contributors' MIT notice.

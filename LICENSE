@@ -1,5 +1,6 @@
 MIT License
 
+Copyright (c) 2025 MoErgo
 Copyright (c) 2026 Mrinal Kalakrishnan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,10 +23,10 @@ SOFTWARE.
 
 ---
 
-The MIT license above covers the RawTouch additions in this repository.
 The repository starts from MoErgo's west-based Go60 configuration
 template (https://github.com/moergo-keyboards/go60-zmk-config-west) and
-keeps its commit history. Files inherited from that template remain
-MoErgo's, under the template's own terms; the MIT license above does not
-apply to them. The stock keymap, config/go60.keymap, carries its own MIT
-notice from The ZMK Contributors.
+keeps its commit history. MoErgo confirmed by email that the template is
+MIT-licensed: files inherited from it are MoErgo's, the RawTouch
+additions are Mrinal Kalakrishnan's, and the license above covers both.
+The stock keymap, config/go60.keymap, carries its own MIT notice from
+The ZMK Contributors.
